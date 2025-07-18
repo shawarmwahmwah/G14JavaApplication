@@ -1,66 +1,104 @@
 package g14javaapplication;
 
 public class Payroll {
-    private Employee employee;
-    private double baseSalary;
-    private double allowance;
-    private double overtimeRate;
-    private double overtimeHours;
-    private double grossPay;
-    private double netPay;
+	private Employee employee;
+	private double baseSalary;
+	private double allowance;
+	private double overtimeRate;
+	private double overtimeHours;
+	private double grossPay;
+	private double netPay;
 
-    public double calculateOvertimePay() {
-        return overtimeHours * overtimeRate;
-    }
+	private Bonuses bonuses;
+	private Deduction deductions;
 
-    public double calculateGrossPay() {
-        grossPay = baseSalary + allowance + calculateOvertimePay();
-        return grossPay;
-    }
+	public double calculateOvertimePay() {
+		return overtimeHours * overtimeRate;
+	}
 
-    public double calculateNetPay() {
-        // Assuming deductions are handled elsewhere
-        netPay = grossPay; // Placeholder for actual net pay calculation
-        return netPay;
-    }
+	public double calculateGrossPay() {
+		grossPay = baseSalary + allowance + calculateOvertimePay();
+		if (bonuses != null) {
+			grossPay += bonuses.getTotalBonuses();
+		}
+		return grossPay;
+	}
 
-    public Employee getEmployee() {
-        return employee;
-    }
+	public double calculateNetPay() {
+		calculateGrossPay(); // ensure gross is calculated
 
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
-    }
+		if (deductions == null) {
+			deductions = new Deduction();
+		}
 
-    public double getBaseSalary() {
-        return baseSalary;
-    }
+		deductions.computeAllDeductions(grossPay); // pass grossPay for correct tax computation
+		netPay = grossPay - deductions.getTotalDeductions();
+		return netPay;
+	}
 
-    public void setBaseSalary(double baseSalary) {
-        this.baseSalary = baseSalary;
-    }
+	// Getters and Setters
 
-    public double getAllowance() {
-        return allowance;
-    }
+	public Employee getEmployee() {
+		return employee;
+	}
 
-    public void setAllowance(double allowance) {
-        this.allowance = allowance;
-    }
+	public void setEmployee(Employee employee) {
+		this.employee = employee;
+	}
 
-    public double getOvertimeHours() {
-        return overtimeHours;
-    }
+	public double getBaseSalary() {
+		return baseSalary;
+	}
 
-    public void setOvertimeHours(double overtimeHours) {
-        this.overtimeHours = overtimeHours;
-    }
+	public void setBaseSalary(double baseSalary) {
+		this.baseSalary = baseSalary;
+	}
 
-    public double getOvertimeRate() {
-        return overtimeRate;
-    }
+	public double getAllowance() {
+		return allowance;
+	}
 
-    public void setOvertimeRate(double overtimeRate) {
-        this.overtimeRate = overtimeRate;
-    }
+	public void setAllowance(double allowance) {
+		this.allowance = allowance;
+	}
+
+	public double getOvertimeHours() {
+		return overtimeHours;
+	}
+
+	public void setOvertimeHours(double overtimeHours) {
+		this.overtimeHours = overtimeHours;
+	}
+
+	public double getOvertimeRate() {
+		return overtimeRate;
+	}
+
+	public void setOvertimeRate(double overtimeRate) {
+		this.overtimeRate = overtimeRate;
+	}
+
+	public void setBonuses(Bonuses bonuses) {
+		this.bonuses = bonuses;
+	}
+
+	public Bonuses getBonuses() {
+		return bonuses;
+	}
+
+	public void setDeductions(Deduction deductions) {
+		this.deductions = deductions;
+	}
+
+	public Deduction getDeductions() {
+		return deductions;
+	}
+
+	public double getGrossPay() {
+		return grossPay;
+	}
+
+	public double getNetPay() {
+		return netPay;
+	}
 }

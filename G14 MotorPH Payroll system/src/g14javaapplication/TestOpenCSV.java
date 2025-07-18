@@ -9,7 +9,13 @@ public class TestOpenCSV {
     public static void main(String[] args) {
         try {
             File csvFile = new File("employees.csv");
-            System.out.println("CSV FILE PATH: " + csvFile.getAbsolutePath());
+            System.out.println("Looking for employees.csv in: " + csvFile.getAbsolutePath());
+
+            if (!csvFile.exists()) {
+                System.out.println("❌ File not found: employees.csv");
+            } else {
+                System.out.println("✅ File found: Proceeding to read...");
+            }
 
             CSVReader reader = new CSVReader(new FileReader(csvFile));
             String[] line;
