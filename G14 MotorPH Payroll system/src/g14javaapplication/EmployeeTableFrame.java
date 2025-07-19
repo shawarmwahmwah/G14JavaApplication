@@ -11,11 +11,16 @@ import javax.swing.table.DefaultTableModel;
 import com.opencsv.*;
 
 public class EmployeeTableFrame extends JFrame {
-    private JTable employeeTable;
+	private final String employeeId;
+	private final String role;
+	private JTable employeeTable;
     private DefaultTableModel tableModel;
-    private static final String EMPLOYEE_CSV_PATH = "C:\\Users\\Niko Giron\\Desktop\\MotorPH Employee App\\G14 MotorPH Payroll system\\employees.csv";
+    private static final String EMPLOYEE_CSV_PATH = "employees.csv";
 
-    public EmployeeTableFrame(String filterEmployeeId) {
+    public EmployeeTableFrame(String username, String role) {
+    	this.employeeId = username;
+    	this.role = role;
+    	
         setTitle("All Employee Records");
         setSize(1000, 400);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -49,6 +54,12 @@ public class EmployeeTableFrame extends JFrame {
         JButton editButton = new JButton("Edit Employee");
         JButton deleteButton = new JButton("Delete Employee");
         JButton restoreButton = new JButton("Restore Backup");
+
+        if (!"admin".equalsIgnoreCase(role)) {
+            editButton.setEnabled(false);
+            deleteButton.setEnabled(false);
+            restoreButton.setEnabled(false);
+        }
 
         viewButton.addActionListener(e -> viewSelectedEmployee());
         editButton.addActionListener(e -> editSelectedEmployee());
@@ -89,7 +100,11 @@ public class EmployeeTableFrame extends JFrame {
         add(buttonPanel, BorderLayout.SOUTH);
         add(searchPanel, BorderLayout.NORTH);
 
-        loadEmployeeData(filterEmployeeId);
+        if (role.equalsIgnoreCase("admin")) {
+            loadEmployeeData(null); // admin sees all
+        } else {
+            loadEmployeeData(employeeId); // employee sees their own
+        }
 
         searchButton.addActionListener(e -> {
             String keyword = searchField.getText().trim().toLowerCase();
@@ -129,7 +144,7 @@ public class EmployeeTableFrame extends JFrame {
     }
 
     private void loadEmployeeData(String filterEmployeeId) {
-        String filePath = "C:\\Users\\Niko Giron\\Desktop\\MotorPH Employee App\\G14 MotorPH Payroll system\\employees.csv";
+        String filePath = EMPLOYEE_CSV_PATH;
         File csvFile = new File(filePath);
 
         if (!csvFile.exists()) {
@@ -264,7 +279,11 @@ public class EmployeeTableFrame extends JFrame {
             employeeData[i] = tableModel.getValueAt(selectedRow, i).toString();
         }
 
-        new EditEmployeeForm(employeeData, this).setVisible(true);
+        if ("admin".equalsIgnoreCase(role) || employeeData[0].equals(employeeId)) {
+            new EditEmployeeForm(employeeData, this).setVisible(true);
+        } else {
+            showCustomMessageDialog(this, "You are not allowed to edit other employee's information.");
+        }
     }
 
     private void restoreFromBackup() {

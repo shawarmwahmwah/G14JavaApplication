@@ -19,7 +19,7 @@ public class PayrollPanel extends JFrame {
 
 	public PayrollPanel(String[] data, String month) {
 		setTitle("Payroll Payslip");
-		setSize(480, 580);
+		setSize(480, 650);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout());

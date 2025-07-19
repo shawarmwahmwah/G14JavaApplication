@@ -7,6 +7,10 @@ import java.awt.event.*;
 import java.io.FileReader;
 
 public class g14javaapplication {
+	private String loggedInUserRole = "";
+	private String loggedInUsername = "";
+	private String loggedInEmployeeID = "";
+	
 	private JFrame frame;
 
 	public static void main(String[] args) {
@@ -88,7 +92,7 @@ public class g14javaapplication {
 			if (validateLogin(username, password)) {
 				showCustomDialog(frame, "Login successful!");
 				frame.dispose();
-				showDashboard(username);
+				showDashboard(loggedInUsername, loggedInUserRole);
 			} else {
 				showCustomDialog(frame, "Invalid credentials. Please try again.");
 			}
@@ -107,8 +111,15 @@ public class g14javaapplication {
 			reader.readNext(); // skip header
 			String[] nextLine;
 			while ((nextLine = reader.readNext()) != null) {
-				if (nextLine.length >= 2) {
+				if (nextLine.length >= 3) {
 					if (nextLine[0].equals(username) && nextLine[1].equals(password)) {
+						loggedInUserRole = nextLine[2]; // role (admin or employee)
+						loggedInUsername = nextLine[0]; // username
+						if (nextLine.length > 3 && !nextLine[3].isEmpty()) {
+						    loggedInEmployeeID = nextLine[3]; // employeeID
+						} else {
+						    loggedInEmployeeID = ""; // fallback
+						}
 						return true;
 					}
 				}
@@ -120,7 +131,7 @@ public class g14javaapplication {
 		return false;
 	}
 
-	private void showDashboard(String empId) {
+	private void showDashboard(String empId, String role) {
 		frame = new JFrame("MOTORPH Dashboard");
 		frame.setSize(630, 400);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -149,7 +160,9 @@ public class g14javaapplication {
 		sidebar.add(createSidebarButton("Employee Info", 70));
 		sidebar.add(createSidebarButton("Attendance", 120));
 		sidebar.add(createSidebarButton("Payroll", 170));
-		sidebar.add(createSidebarButton("New Employee", 220));
+		if (loggedInUserRole.equalsIgnoreCase("admin")) {
+		    sidebar.add(createSidebarButton("New Employee", 220));
+		}
 
 		// Log out label
 		JLabel logoutLabel = new JLabel("Log out");
@@ -185,7 +198,9 @@ public class g14javaapplication {
 		addMainButton("Employee Info", "employee.png", 180, 40);
 		addMainButton("Payroll", "payroll.png", 400, 40);
 		addMainButton("Attendance", "attendance.png", 180, 200);
-		addMainButton("New Employee", "add_user.png", 400, 200);
+		if (loggedInUserRole.equalsIgnoreCase("admin")) {
+		    addMainButton("New Employee", "add_user.png", 400, 200);
+		}
 	}
 
 	private JButton createSidebarButton(String text, int y) {
@@ -213,16 +228,40 @@ public class g14javaapplication {
 		button.addActionListener(e -> {
 			switch (text) {
 			case "Employee Info":
-				new EmployeeTableFrame(null).setVisible(true);
-				break;
+			    if (loggedInUserRole.equalsIgnoreCase("admin")) {
+			        new EmployeeTableFrame(loggedInUsername, loggedInUserRole).setVisible(true);
+			    } else {
+			        // Load employee's own data from employees.csv
+			    	try (CSVReader reader = new CSVReader(new FileReader("employees.csv"))) {
+			    	    reader.readNext(); // Skip header
+			    	    String[] nextLine;
+			    	    boolean found = false;
+
+			    	    while ((nextLine = reader.readNext()) != null) {
+			    	    	if (nextLine.length >= 13 && nextLine[0].equalsIgnoreCase(loggedInEmployeeID)) {
+			    	    		new EmployeeDetailsFrame(nextLine);
+			    	    		found = true;
+			    	    		break;
+			    	    	}
+			    	    }
+
+			    	    if (!found) {
+			    	        JOptionPane.showMessageDialog(frame, "No matching employee record found for username: " + loggedInUsername);
+			    	    }
+			    	} catch (Exception ex) {
+			    	    JOptionPane.showMessageDialog(frame, "Error loading employee data (employees.csv): " + ex.getMessage());
+			    	    ex.printStackTrace();
+			    	}
+			    }
+			    break;
 			case "Attendance":
-				new AttendanceFrame().setVisible(true);
-				break;
+			    new AttendanceFrame(loggedInUsername, loggedInUserRole, loggedInEmployeeID).setVisible(true);
+			    break;
 			case "Payroll":
-				new PayrollSelectionFrame().setVisible(true); // or custom payroll view
-				break;
+			    new PayrollSelectionFrame(loggedInUsername, loggedInUserRole, loggedInEmployeeID).setVisible(true);
+			    break;
 			case "New Employee":
-				new NewEmployeeForm(new EmployeeTableFrame(null)).setVisible(true);
+				new NewEmployeeForm(new EmployeeTableFrame(loggedInUsername, loggedInUserRole)).setVisible(true);
 				break;
 			}
 		});
@@ -255,16 +294,40 @@ public class g14javaapplication {
 			public void mouseClicked(MouseEvent e) {
 				switch (label) {
 				case "Employee Info":
-					new EmployeeTableFrame(null).setVisible(true);
-					break;
+				    if (loggedInUserRole.equalsIgnoreCase("admin")) {
+				        new EmployeeTableFrame(loggedInUsername, loggedInUserRole).setVisible(true);
+				    } else {
+				        // Load employee's own data from employee.csv
+				    	try (CSVReader reader = new CSVReader(new FileReader("employees.csv"))) {
+				    	    reader.readNext(); // Skip header
+				    	    String[] nextLine;
+				    	    boolean found = false;
+
+				    	    while ((nextLine = reader.readNext()) != null) {
+				    	    	if (nextLine.length >= 13 && nextLine[0].equalsIgnoreCase(loggedInEmployeeID)) {
+				    	    		new EmployeeDetailsFrame(nextLine);
+				    	    		found = true;
+				    	    		break;
+				    	    	}
+				    	    }
+
+				    	    if (!found) {
+				    	        JOptionPane.showMessageDialog(frame, "No matching employee record found for username: " + loggedInUsername);
+				    	    }
+				    	} catch (Exception ex) {
+				    	    JOptionPane.showMessageDialog(frame, "Error loading employee data (employees.csv): " + ex.getMessage());
+				    	    ex.printStackTrace();
+				    	}
+				    }
+				    break;
 				case "Attendance":
-					new AttendanceFrame().setVisible(true);
-					break;
+				    new AttendanceFrame(loggedInUsername, loggedInUserRole, loggedInEmployeeID).setVisible(true);
+				    break;
 				case "Payroll":
-					new PayrollSelectionFrame().setVisible(true);
-					break;
+				    new PayrollSelectionFrame(loggedInUsername, loggedInUserRole, loggedInEmployeeID).setVisible(true);
+				    break;
 				case "New Employee":
-					new NewEmployeeForm(new EmployeeTableFrame(null)).setVisible(true);
+					new NewEmployeeForm(new EmployeeTableFrame(loggedInUsername, loggedInUserRole)).setVisible(true);
 					break;
 				}
 			}

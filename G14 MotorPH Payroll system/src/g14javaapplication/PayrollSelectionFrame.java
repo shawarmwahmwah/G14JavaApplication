@@ -7,13 +7,36 @@ import java.awt.*;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
+import java.awt.*;
 
 public class PayrollSelectionFrame extends JFrame {
+    private String username;
+    private String employeeID;
+    private String role;
     private JComboBox<String> monthComboBox;
     private JTable table;
     private List<String[]> employeeDataList = new ArrayList<>();
+    private String getEmployeeIDFromUsername(String username) {
+        try (CSVReader reader = new CSVReader(new FileReader("employees.csv"))) {
+            String[] nextLine;
+            reader.readNext(); // skip header
+            while ((nextLine = reader.readNext()) != null) {
+                String fileUsername = nextLine[3]; // assuming Username is column 4 (index 3)
+                if (fileUsername.equalsIgnoreCase(username)) {
+                    return nextLine[0]; // Return Employee ID
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error finding employee ID: " + e.getMessage());
+        }
+        return null;
+    }
 
-    public PayrollSelectionFrame() {
+    public PayrollSelectionFrame(String username, String role, String employeeID) {
+        this.username = username;
+        this.role = role;
+        this.employeeID = employeeID; 
         setTitle("Payroll");
         setSize(630, 400);
         setLocationRelativeTo(null);
@@ -72,31 +95,34 @@ public class PayrollSelectionFrame extends JFrame {
 
         exitButton.addActionListener(e -> dispose());
 
-        // 📋 Employee Table (Center Content)
-        // Load employee data
-        try (CSVReader reader = new CSVReader(new FileReader("employees.csv"))) {
-            String[] header = reader.readNext(); // skip header
-            String[] row;
-            while ((row = reader.readNext()) != null) {
-                employeeDataList.add(row);
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Error reading employees.csv:\n" + e.getMessage());
-            dispose();
-            return;
-        }
+     // 📋 Employee Table (Center Content)
+     // Load employee data and build table based on role
+     DefaultTableModel model = new DefaultTableModel(
+         new String[]{"Employee ID", "Last Name", "First Name"}, 0);
 
-        DefaultTableModel model = new DefaultTableModel(
-                new String[]{"Employee ID", "Last Name", "First Name"}, 0);
-        for (String[] d : employeeDataList) {
-            model.addRow(new Object[]{d[0], d[1], d[2]});
-        }
+     try (CSVReader reader = new CSVReader(new FileReader("employees.csv"))) {
+    	    reader.readNext(); // skip header
+    	    String[] row;
+    	    while ((row = reader.readNext()) != null) {
+    	        if ("admin".equalsIgnoreCase(role)) {
+    	            employeeDataList.add(row);
+    	            model.addRow(new Object[]{row[0], row[1], row[2]});
+    	        } else if ("employee".equalsIgnoreCase(role) && row[0].equals(employeeID)) {
+    	            employeeDataList.add(row);
+    	            model.addRow(new Object[]{row[0], row[1], row[2]});
+    	        }
+    	    }
+    	} catch (Exception e) {
+    	    JOptionPane.showMessageDialog(this,
+    	            "Error reading employees.csv:\n" + e.getMessage());
+    	    dispose();
+    	    return;
+    	}
 
-        table = new JTable(model);
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(20, 55, 590, 320);
-        add(scrollPane);
+     table = new JTable(model);
+     JScrollPane scrollPane = new JScrollPane(table);
+     scrollPane.setBounds(20, 55, 590, 320);
+     add(scrollPane);
 
         // ▶️ Action Listener for Generate
         genBtn.addActionListener(e -> onGenerate());
@@ -105,17 +131,30 @@ public class PayrollSelectionFrame extends JFrame {
     }
 
     private void onGenerate() {
-        int sel = table.getSelectedRow();
-        if (sel < 0) {
-            JOptionPane.showMessageDialog(this, "Select an employee first.");
-            return;
-        }
         String month = (String) monthComboBox.getSelectedItem();
         if (monthComboBox.getSelectedIndex() == 0) {
             JOptionPane.showMessageDialog(this, "Select a month first.");
             return;
         }
-        String[] data = employeeDataList.get(sel);
+
+        String[] data;
+
+        if ("admin".equalsIgnoreCase(role)) {
+            int sel = table.getSelectedRow();
+            if (sel < 0) {
+                JOptionPane.showMessageDialog(this, "Select an employee first.");
+                return;
+            }
+            data = employeeDataList.get(sel);
+        } else {
+            // Employee should not need to click — just use first and only row
+            if (employeeDataList.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Employee data not loaded.");
+                return;
+            }
+            data = employeeDataList.get(0);
+        }
+
         new PayrollPanel(data, month).setVisible(true);
     }
 }
