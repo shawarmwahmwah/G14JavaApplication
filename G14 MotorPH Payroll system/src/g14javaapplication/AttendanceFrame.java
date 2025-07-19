@@ -17,6 +17,7 @@ public class AttendanceFrame extends JFrame {
     private String loggedInUsername;
     private String loggedInUserRole;
     private String loggedInEmployeeID;
+
     private String getEmployeeIDFromUsername(String username) {
         try (CSVReader reader = new CSVReader(new FileReader("employees.csv"))) {
             String[] nextLine;
@@ -37,16 +38,27 @@ public class AttendanceFrame extends JFrame {
         this.loggedInUsername = username;
         this.loggedInUserRole = role;
         this.loggedInEmployeeID = employeeID;
-        
+
         setTitle("Employee Attendance");
         setSize(800, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(Color.WHITE);
 
-        // Top panel for search
+        // Top panel
         JPanel topPanel = new JPanel(new BorderLayout(10, 10));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
+        topPanel.setBackground(Color.WHITE);
+
+        JLabel titleLabel = new JLabel("Employee Attendance");
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        titleLabel.setForeground(Color.WHITE);
+
+        JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        titleBar.setBackground(new Color(0x3F66B0));
+        titleBar.setPreferredSize(new Dimension(800, 45));
+        titleBar.add(titleLabel);
 
         JLabel searchLabel = new JLabel("Search by Name or ID:");
         searchField = new JTextField();
@@ -55,19 +67,50 @@ public class AttendanceFrame extends JFrame {
         topPanel.add(searchLabel, BorderLayout.WEST);
         topPanel.add(searchField, BorderLayout.CENTER);
         topPanel.add(backButton, BorderLayout.EAST);
-        add(topPanel, BorderLayout.NORTH);
 
-        // Correct column headers
+        add(titleBar, BorderLayout.NORTH);
+        add(topPanel, BorderLayout.BEFORE_FIRST_LINE);
+
+        // Table and scroll
         String[] columnNames = { "Employee ID", "Last Name", "First Name", "Date", "Log In", "Log Out" };
         tableModel = new DefaultTableModel(columnNames, 0);
         table = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(table);
+
+        table.setRowHeight(30);
+        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+        table.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        table.setGridColor(new Color(220, 220, 220));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        JScrollPane scrollPane = new JScrollPane(table,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         add(scrollPane, BorderLayout.CENTER);
 
-        // Load data from CSV for specific employee only
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        buttonPanel.setBackground(Color.WHITE);
+
+        String[] buttonLabels = { "View", "Delete", "Edit", "Save" };
+        for (String text : buttonLabels) {
+            JButton button = new JButton(text);
+            button.setPreferredSize(new Dimension(100, 35));
+            button.setBackground(new Color(0x3F66B0));
+            button.setForeground(Color.WHITE);
+            button.setFocusPainted(false);
+            button.setBorderPainted(false);
+            button.setFont(new Font("SansSerif", Font.BOLD, 13));
+            button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            buttonPanel.add(button);
+        }
+
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        // Load CSV data
         loadAttendanceData();
 
-        // Search functionality
+        // Search filter
         searchField.addKeyListener(new KeyAdapter() {
             public void keyReleased(KeyEvent e) {
                 String query = searchField.getText().toLowerCase();
@@ -75,9 +118,9 @@ public class AttendanceFrame extends JFrame {
             }
         });
 
-        // Back button
+        // Back button action
         backButton.addActionListener(e -> {
-            dispose(); // close frame
+            dispose();
         });
     }
 
@@ -113,8 +156,6 @@ public class AttendanceFrame extends JFrame {
             String fullName = (row[1] + " " + row[2]).toLowerCase();
 
             boolean matches = empId.contains(query) || fullName.contains(query);
-
-            // Only allow admin or employee's own records to show on filter
             boolean isAllowed = "admin".equalsIgnoreCase(loggedInUserRole) || row[0].equalsIgnoreCase(employeeID);
 
             if (matches && isAllowed) {
