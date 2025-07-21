@@ -1,10 +1,33 @@
 package g14javaapplication;
 
-import com.opencsv.CSVReader;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.FileReader;
+import java.text.SimpleDateFormat;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import com.opencsv.CSVReader;
 
 public class g14javaapplication {
 	private String loggedInUserRole = "";
@@ -160,9 +183,10 @@ public class g14javaapplication {
 		sidebar.add(createSidebarButton("Employee Info", 70));
 		sidebar.add(createSidebarButton("Attendance", 120));
 		sidebar.add(createSidebarButton("Payroll", 170));
+		sidebar.add(createSidebarButton("Time In/Out", 270));
 		if (loggedInUserRole.equalsIgnoreCase("admin")) {
 		    sidebar.add(createSidebarButton("New Employee", 220));
-		}
+		    }
 
 		// Log out label
 		JLabel logoutLabel = new JLabel("Log out");
@@ -263,6 +287,9 @@ public class g14javaapplication {
 			case "New Employee":
 				new NewEmployeeForm(new EmployeeTableFrame(loggedInUsername, loggedInUserRole)).setVisible(true);
 				break;
+			case "Time In/Out":  
+			    showTimeTrackerMenu();
+			    break;
 			}
 		});
 
@@ -329,6 +356,9 @@ public class g14javaapplication {
 				case "New Employee":
 					new NewEmployeeForm(new EmployeeTableFrame(loggedInUsername, loggedInUserRole)).setVisible(true);
 					break;
+				case "Time In/Out":
+				    showTimeTrackerMenu();
+				    break;
 				}
 			}
 
@@ -414,5 +444,30 @@ public class g14javaapplication {
 
 	private void showNewEmployeeForm() {
 		JOptionPane.showMessageDialog(frame, "Opening New Employee Form...");
+	}
+	private void showTimeTrackerMenu() {
+	    String[] options = { "Clock In", "Clock Out" };
+	    
+	    String selectedAction = (String) JOptionPane.showInputDialog(
+	            frame,
+	            "Select your action:",
+	            "Time In/Out",
+	            JOptionPane.PLAIN_MESSAGE,
+	            null,
+	            options,
+	            options[0]);
+
+	    if (selectedAction != null) {
+	        // Get current time
+	        String currentTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
+
+	        // Show confirmation dialog
+	        JOptionPane.showMessageDialog(
+	                frame,
+	                "You have successfully performed: " + selectedAction + "\nTime: " + currentTime,
+	                "Confirmation",
+	                JOptionPane.INFORMATION_MESSAGE
+	        );
+	    }
 	}
 }
