@@ -2,7 +2,11 @@ package g14javaapplication;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -55,9 +59,15 @@ public class PayrollPanel extends JFrame {
 	private void generatePayslip(String[] d, String month) {
 		DecimalFormat df = new DecimalFormat("#,##0.00");
 
-		// STEP 1: Set up Payroll object
 		Payroll payroll = new Payroll();
-		payroll.setBaseSalary(parseNumeric(d[13]));
+
+		// STEP 1: Compute dynamic base salary from attendance
+		double hourlyRate = parseNumeric(d[18]);
+		double hoursWorked = getActualHoursWorked(d[0]); // Employee ID
+
+		if (hourlyRate > 0 && hoursWorked > 0) {
+			payroll.computeBaseSalaryFromHoursWorked(hoursWorked, hourlyRate);
+		}
 
 		double rice = parseNumeric(d[14]);
 		double phone = parseNumeric(d[15]);
@@ -65,7 +75,6 @@ public class PayrollPanel extends JFrame {
 		double totalAllowance = rice + phone + clothing;
 		payroll.setAllowance(totalAllowance);
 
-		// STEP 2: Set up Bonuses (you may replace hardcoded values with actual logic)
 		Bonuses bonuses = new Bonuses();
 		bonuses.setThirteenMonthPay(1000);
 		bonuses.setIncentiveBonus(500);
@@ -73,18 +82,14 @@ public class PayrollPanel extends JFrame {
 		bonuses.setPerformanceBonus(700);
 		payroll.setBonuses(bonuses);
 
-		// STEP 3: Calculate Gross Pay
 		double gross = payroll.calculateGrossPay();
 
-		// STEP 4: Compute Deductions
 		Deduction deductions = new Deduction();
-		deductions.computeAllDeductions(gross); // You must have this method in Deduction.java
+		deductions.computeAllDeductions(gross);
 		payroll.setDeductions(deductions);
 
-		// STEP 5: Calculate Net Pay
 		double net = payroll.calculateNetPay();
 
-		// STEP 6: Render to payslip
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html><body style='font-family:monospace; text-align:center;'>");
 		sb.append("<h3 style='text-align:center;'>================ PAYSLIP ================</h3>");
@@ -132,5 +137,31 @@ public class PayrollPanel extends JFrame {
 		} catch (Exception e) {
 			return 0.0;
 		}
+	}
+
+	private double getActualHoursWorked(String employeeId) {
+		double totalHours = 0.0;
+		try (BufferedReader br = new BufferedReader(new FileReader("employee_attendance.csv"))) {
+			String line;
+			br.readLine(); // Skip header
+			while ((line = br.readLine()) != null) {
+				String[] parts = line.split(",");
+				if (parts[0].equals(employeeId)) {
+					String logIn = parts[4].trim();
+					String logOut = parts[5].trim();
+
+					SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+					Date in = format.parse(logIn);
+					Date out = format.parse(logOut);
+
+					long diff = out.getTime() - in.getTime();
+					double hours = diff / (1000.0 * 60.0 * 60.0);
+					totalHours += hours;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return totalHours;
 	}
 }

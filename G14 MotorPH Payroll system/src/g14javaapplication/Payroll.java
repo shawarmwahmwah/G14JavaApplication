@@ -101,4 +101,8 @@ public class Payroll {
 	public double getNetPay() {
 		return netPay;
 	}
+	public void computeBaseSalaryFromHoursWorked(double hoursWorked, double hourlyRate) {
+	    this.baseSalary = hoursWorked * hourlyRate;
+	    this.grossPay = this.baseSalary + this.allowance + calculateOvertimePay(); // if overtime is applicable
+	}
 }

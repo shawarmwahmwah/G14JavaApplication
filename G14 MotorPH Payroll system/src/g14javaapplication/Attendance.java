@@ -1,6 +1,14 @@
 package g14javaapplication;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 public class Attendance {
+    private String employeeId;
+    private String date;
+    private String timeIn;
+    private String timeOut;
     private int logId;
     private String timestamp;
     private String activity;
